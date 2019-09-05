@@ -30,11 +30,11 @@
                     <button class="destroy" @click="removeTodo(todo)"></button>
                 </div>
                 <input type="text" class="edit"
-                    v-model="todo.title"
-                    v-todo-focus="todo == editedTodo"
-                    @blur="doneEdit(todo)"
-                    @keyup.enter="doneEdit(todo)"
-                    @keyup.esc="cancelEdit(todo)">
+                       v-model="todo.title"
+                       v-todo-focus="todo == editedTodo"
+                       @blur="doneEdit(todo)"
+                       @keyup.enter="doneEdit(todo)"
+                       @keyup.esc="cancelEdit(todo)">
             </li>
         </ul>
     </section>
@@ -55,25 +55,143 @@
 
 
 <script>
-    let app = new Vue({
-        data:{
-            todos:'',
-            newTodo:'',
-            editedTodo:null,
-            visibility:'all',
-        },
-        methods:{
 
+
+    //MVC 的 M model
+    let STORAGE_KEY = 'todos-vuejs'
+    let todoStorage = {
+        fetch: function () {//取值
+            let todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")
+            todos.forEach(function (todo, index) {
+                todo.id = index
+            })
+            todoStorage.uid = todos.length
+            return todos
         },
-        directives:{
-            'todo-focus':function(el,binding){
-                if (binding.value){
+        save: function (todos) {//保存
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
+        }
+    }
+
+    //visibility 过滤器
+    let filters = {
+        all: function (todos) {
+            return todos
+        },
+        active: function (todos) {
+            return todos.filter(function (todo) {
+                console.log(todo,'过滤器')
+                return !todo.completed
+            })
+        },
+        completed: function (todos) {
+            return todos.filter(function (todo) {
+                return todo.completed
+            })
+        }
+    }
+
+    let app = new Vue({
+        data: {
+            todos: todoStorage.fetch(),
+            newTodo: '',
+            editedTodo: null,
+            visibility: 'all',
+        },
+        watch: {
+            todos: {//深度监听，本地存储持久化
+                handler: function (todos) {
+                    todoStorage.save(todos)
+                },
+                deep: true
+            }
+        },
+        computed: {
+            filteredTodos: function () {
+                return filters[this.visibility](this.todos)
+            },
+            remaining: function () {
+                return filters.active(this.todos).length
+            },
+            allDone: {
+                get: function () {
+                    return this.remaining === 0
+                },
+                set: function (value) {
+                    this.todos.forEach(function (todo) {
+                        todo.completed = value
+                    })
+                }
+            }
+        },
+
+        filters: {
+            pluralize: function (n) {
+                return n === 1 ? 'item' : 'items'
+            }
+        },
+
+        methods: {
+            addTodo: function () {//添加备忘条
+                console.log(this.todos, '111111111111111111111')
+                let value = this.newTodo && this.newTodo.trim()
+                if (!value) {
+                    return
+                }
+                this.todos.push({
+                    id: todoStorage.uid++,
+                    title: value,
+                    completed: false,
+                })
+                this.newTodo = ''
+            },
+            removeTodo: function (todo) {//删除备忘条
+                this.todos.splice(this.todos.indexOf(todo), 1)
+            },
+            editTodo: function (todo) {//编辑备忘条
+                this.beforeEditCache = todo.title;//在编辑之前缓存
+                this.editedTodo = todo
+            },
+            doneEdit: function (todo) {//保存修改内容
+                if (!this.editedTodo) {
+                    return
+                }
+                this.editedTodo = null
+                todo.title = todo.title.trim()
+                if (!todo.title) {
+                    this.removeTodo(todo)
+                }
+            },
+            cancelEdit: function (todo) {//Esc 回到编辑之前的内容
+                this.editedTodo = null
+                todo.title = this.beforeEditCache
+            },
+            removeCompleted: function () {//删除已完成的备忘条
+                console.log(filters.active(this.todos),'9999999999')
+                this.todos = filters.active(this.todos)
+            }
+        },
+        directives: {
+            'todo-focus': function (el, binding) {
+                if (binding.value) {
                     el.focus()
                 }
             }
         }
-
     })
+
+    function onHashChange() {
+        let visibility = window.location.hash.replace(/#\/?/, '')
+        if (filters[visibility]) {
+            app.visibility = visibility
+        } else {
+            window.location.hash = ''
+            app.visibility = 'all'
+        }
+    }
+
+    window.addEventListener('hashchange', onHashChange)
+    onHashChange()
 
     app.$mount('.todoapp')//挂载
 </script>
