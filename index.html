@@ -12,7 +12,7 @@
         <h1>备忘录</h1>
         <input class="new-todo"
                autofocus autocomplete="off"
-               placeholder="what needs to be done?"
+               placeholder="准备做什么?"
                v-model="newTodo"
                @keyup.enter="addTodo"
         >
@@ -132,7 +132,6 @@
 
         methods: {
             addTodo: function () {//添加备忘条
-                console.log(this.todos, '111111111111111111111')
                 let value = this.newTodo && this.newTodo.trim()
                 if (!value) {
                     return
@@ -166,7 +165,6 @@
                 todo.title = this.beforeEditCache
             },
             removeCompleted: function () {//删除已完成的备忘条
-                console.log(filters.active(this.todos),'9999999999')
                 this.todos = filters.active(this.todos)
             }
         },
@@ -180,8 +178,10 @@
     })
 
     function onHashChange() {
+        console.log(window.location.hash)
         let visibility = window.location.hash.replace(/#\/?/, '')
-        if (filters[visibility]) {console.log(visibility,'1111111111111')
+        console.log(visibility)
+        if (filters[visibility]) {
             app.visibility = visibility
         } else {
             window.location.hash = ''
@@ -189,7 +189,8 @@
         }
     }
 
-    window.addEventListener('hashchange', onHashChange)
+    //监听器，监听hash的改变
+    window.addEventListener('hashchange', onHashChange,{once:true})
     onHashChange()
 
     app.$mount('.todoapp')//挂载
