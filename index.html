@@ -9,7 +9,7 @@
 <body>
 <section class="todoapp">
     <header class="header">
-        <h1>便利贴</h1>
+        <h1>备忘录</h1>
         <input class="new-todo"
                autofocus autocomplete="off"
                placeholder="what needs to be done?"
@@ -80,7 +80,6 @@
         },
         active: function (todos) {
             return todos.filter(function (todo) {
-                console.log(todo,'过滤器')
                 return !todo.completed
             })
         },
@@ -182,7 +181,7 @@
 
     function onHashChange() {
         let visibility = window.location.hash.replace(/#\/?/, '')
-        if (filters[visibility]) {
+        if (filters[visibility]) {console.log(visibility,'1111111111111')
             app.visibility = visibility
         } else {
             window.location.hash = ''
